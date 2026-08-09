@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> MAXSUS TAYYORLANDI KURSDOSHIM 🌸 </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    @keyframes shake {
+      0%,100% { transform:translateX(0); }
+      10%,30%,50%,70%,90% { transform:translateX(-6px); }
+      20%,40%,60%,80% { transform:translateX(6px); }
+    }
+    .shake { animation:shake 0.5s ease; }
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(244,114,182,.4); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(244,114,182,.7); }
+    .spotify-frame { border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.2); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>11/dist/framer-motion.umd.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+    const { motion, AnimatePresence } = window.Motion;
+
+    // ─── CONFIG ───────────────────────────────────────────────────────
+    const CORRECT_PIN  = "0302";
+    const START_DATE   = new Date("2025-09-15T00:00:00");
+    const PUZZLE_IMAGE = "photo_2026-08-08_22-35-42.jpg";
+    const SPOTIFY_TRACKS = [
+      "46KLF71ohV9L1ofQddlPuS",
+      "2JVxNXAujFtvVXSj0P1pjY",
+      "6VhuP99TE6gYNQRJIlAWFD",
+      "50x1Ic8CaXkYNvjmxe3WXy",
+    ];
+
+    // ─── PIXEL HEART ──────────────────────────────────────────────────
+   const FACE = [
+  [0,1,1,0,0,0,0,1,0],
+  [0,0,0,0,0,0,1,1,0],
+  [0,0,0,0,0,0,0,0,0],
+  [0,0,1,0,1,1,0,0,0],
+  [0,0,0,1,1,0,0,0,0],
+];
+    function PixelHeart({ size=13 }) {
+      return (
+        <div style={{ display:'grid', gridTemplateColumns:`repeat(9,${size}px)`, gap:2 }}>
+          {HEART_ROWS.map((row,ri)=>row.map((c,ci)=>(
+            <div key={`${ri}-${ci}`} style={{
+              width:size,height:size,borderRadius:2,
+              background:c?'#f472b6':'transparent',
+              boxShadow:c?'0 0 5px rgba(244,114,182,.5)':'none',
+            }}/>
+          )))}
+        </div>
+      );
+    }
+
+    // ─── LOCK SCREEN ──────────────────────────────────────────────────
+    function LockScreen({ onUnlock }) {
+      const [pin,setPin]     = useState('');
+      const [error,setError] = useState(false);
+      const [ok,setOk]       = useState(false);
+      const dotsRef          = useRef(null);
+
+      const pushKey = useCallback(d => {
+        if(ok) return;
+        setPin(prev=>{
+          if(prev.length>=4) return prev;
+          const next=prev+d;
+          if(next.length===4){
+            if(next===CORRECT_PIN){ setOk(true); setTimeout(()=>onUnlock(),900); }
+            else{
+              setError(true);
+              dotsRef.current?.classList.add('shake');
+              setTimeout(()=>{ dotsRef.current?.classList.remove('shake'); },520);
+              setTimeout(()=>{ setPin(''); setError(false); },620);
+            }
+          }
+          return next;
+        });
+      },[ok,onUnlock]);
+
+      const del = useCallback(()=>{ if(!ok) setPin(p=>p.slice(0,-1)); },[ok]);
+
+      useEffect(()=>{
+        const h=e=>{ if(e.key>='0'&&e.key<='9') pushKey(e.key); else if(e.key==='Backspace') del(); };
+        window.addEventListener('keydown',h);
+        return ()=>window.removeEventListener('keydown',h);
+      },[pushKey,del]);
+
+      const pad=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+
+      return (
+        <motion.div
+          key="lock"
+          initial={{ opacity:1 }}
+          exit={{ opacity:0, scale:.94, filter:'blur(10px)' }}
+          transition={{ duration:.75, ease:'easeInOut' }}
+          style={{
+            position:'fixed',inset:0,zIndex:100,
+            background:'linear-gradient(145deg,#fdf6f0 0%,#fce7ef 50%,#fdf2f8 100%)',
+            display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+          }}
+        >
+          {/* ambient blobs */}
+          {[['-80px','-80px',300,'rgba(251,207,232,.45)'],[null,null,null,null],['auto','-60px',240,'rgba(252,231,243,.5)']].map((b,i)=>
+            b[0]!==null && (
+              <div key={i} style={{
+                position:'absolute',top:b[0]==='-80px'?b[0]:undefined,left:b[0]==='-80px'?b[1]:undefined,
+                bottom:b[0]==='auto'?0:undefined,right:b[0]==='auto'?'-60px':undefined,
+                width:b[2],height:b[2],borderRadius:'50%',background:b[3],filter:'blur(60px)',pointerEvents:'none',
+              }}/>
+            )
+          )}
+
+          <motion.div
+            initial={{ y:-20,opacity:0 }}
+            animate={{ y:0,opacity:1 }}
+            transition={{ delay:.15,duration:.6 }}
+            style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:30,maxWidth:340,width:'100%',padding:'0 24px' }}
+          >
+            {/* pixel heart */}
+            <motion.div animate={{ scale:[1,1.07,1] }} transition={{ repeat:Infinity,duration:2.2,ease:'easeInOut' }}>
+              <PixelHeart size={14}/>
+            </motion.div>
+
+            {/* title */}
+            <div style={{ textAlign:'center' }}>
+              <h1 style={{ fontFamily:'Playfair Display',fontSize:28,fontWeight:700,color:'#be185d',letterSpacing:'-.5px' }}>
+                Bizning xotiralar
+              </h1>
+              <p style={{ fontFamily:'Inter',fontSize:14,color:'#9d174d',marginTop:6,opacity:.75 }}>
+                Faqat siz uchun yaratildi 🌸
+              </p>
+            </div>
+
+            {/* dots */}
+            <div ref={dotsRef} style={{ display:'flex',gap:18 }}>
+              {[0,1,2,3].map(i=>(
+                <motion.div key={i} animate={pin.length>i?{scale:[1,1.35,1]}:{}} transition={{duration:.2}} style={{
+                  width:18,height:18,borderRadius:'50%',
+                  border:`2px solid ${error?'#ef4444':'#f472b6'}`,
+                  background:pin.length>i?(error?'#ef4444':'#f472b6'):'transparent',
+                  boxShadow:pin.length>i?`0 0 10px ${error?'rgba(239,68,68,.5)':'rgba(244,114,182,.6)'}`:'none',
+                  transition:'background .15s,border-color .15s',
+                }}/>
+              ))}
+            </div>
+
+            {/* keypad */}
+            <div style={{ display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,width:'100%',maxWidth:280 }}>
+              {pad.map((k,i)=>(
+                k==='' ? <div key={i}/> :
+                <motion.button key={k==='⌫'?'bs':k} whileTap={{ scale:.87 }}
+                  onClick={()=>k==='⌫'?del():pushKey(k)}
+                  style={{
+                    height:62,borderRadius:18,border:'1.5px solid rgba(244,114,182,.3)',
+                    background:'rgba(255,255,255,.72)',backdropFilter:'blur(12px)',
+                    fontSize:k==='⌫'?21:24,fontWeight:500,color:'#be185d',cursor:'pointer',
+                    boxShadow:'0 2px 14px rgba(244,114,182,.1)',
+                    fontFamily:k==='⌫'?'Inter':'Playfair Display',
+                    transition:'background .12s,box-shadow .12s',
+                  }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(252,231,243,.92)';e.currentTarget.style.boxShadow='0 4px 18px rgba(244,114,182,.28)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,.72)';e.currentTarget.style.boxShadow='0 2px 14px rgba(244,114,182,.1)';}}
+                >
+                  {k}
+                </motion.button>
+              ))}
+            </div>
+
+            <AnimatePresence>
+              {ok && (
+                <motion.p initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} style={{ fontFamily:'Playfair Display',color:'#be185d',fontSize:16,fontStyle:'italic' }}>
+                  ✨ Xush kelibsiz!
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
+      );
+    }
+
+    // ─── PUZZLE ───────────────────────────────────────────────────────
+    const G=4, N=G*G;
+    function shuffle(){
+      let a=Array.from({length:N},(_,i)=>i);
+      do{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]; } }
+      while(a.every((v,i)=>v===i));
+      return a;
+    }
+
+    function Puzzle({ onSolved }) {
+      const [tiles,setTiles]   = useState(()=>shuffle());
+      const [sel,setSel]       = useState(null);
+      const [solved,setSolved] = useState(false);
+      const [sz,setSz]         = useState(320);
+
+      useEffect(()=>{
+        const upd=()=>setSz(Math.min(window.innerWidth-48,400));
+        upd(); window.addEventListener('resize',upd);
+        return ()=>window.removeEventListener('resize',upd);
+      },[]);
+
+      const click=idx=>{
+        if(solved) return;
+        if(sel===null){ setSel(idx); return; }
+        if(sel===idx){ setSel(null); return; }
+        const next=[...tiles];
+        [next[sel],next[idx]]=[next[idx],next[sel]];
+        setTiles(next); setSel(null);
+        if(next.every((v,i)=>v===i)){
+          setTimeout(()=>{ setSolved(true); setTimeout(onSolved,1100); },200);
+        }
+      };
+
+      const tw=sz/G, th=sz/G;
+
+      return (
+        <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:16 }}>
+          <AnimatePresence mode="wait">
+            {solved ? (
+              <motion.div key="done"
+                initial={{ scale:.92,opacity:0 }} animate={{ scale:1,opacity:1 }}
+                transition={{ duration:.55,ease:'easeOut' }}
+                style={{ width:sz,height:sz,borderRadius:18,overflow:'hidden',
+                  boxShadow:'0 8px 44px rgba(244,114,182,.45)',border:'3px solid rgba(244,114,182,.6)' }}>
+                <img src={PUZZLE_IMAGE} alt="Complete" style={{ width:'100%',height:'100%',objectFit:'cover' }}/>
+              </motion.div>
+            ) : (
+              <motion.div key="grid" style={{
+                display:'grid',
+                gridTemplateColumns:`repeat(${G},${tw}px)`,
+                gridTemplateRows:`repeat(${G},${th}px)`,
+                gap:2,borderRadius:14,overflow:'hidden',
+                border:'2px solid rgba(244,114,182,.3)',
+                boxShadow:'0 4px 28px rgba(244,114,182,.15)',
+              }}>
+                {tiles.map((t,pos)=>{
+                  const col=t%G, row=Math.floor(t/G);
+                  const isSel=sel===pos;
+                  return (
+                    <motion.div key={pos} onClick={()=>click(pos)}
+                      whileTap={{ scale:.93 }}
+                      style={{
+                        width:tw,height:th,cursor:'pointer',
+                        backgroundImage:`url(${PUZZLE_IMAGE})`,
+                        backgroundSize:`${sz}px ${sz}px`,
+                        backgroundPosition:`-${col*tw}px -${row*th}px`,
+                        outline:isSel?'3px solid #f472b6':'1px solid rgba(255,255,255,.15)',
+                        outlineOffset:isSel?'-3px':'-1px',
+                        filter:isSel?'brightness(1.18) saturate(1.25)':'brightness(1)',
+                        transition:'outline .12s,filter .12s',
+                        boxShadow:isSel?'inset 0 0 0 3px #f472b6':'none',
+                      }}
+                    />
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {solved && (
+              <motion.p initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}
+                style={{ fontFamily:'Playfair Display',fontSize:18,fontStyle:'italic',color:'#be185d' }}>
+                ✨ Ajoyib! Ochilmoqda...
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
+    // ─── TIMER HOOK ───────────────────────────────────────────────────
+    function useTimer(start){
+      const [e,setE]=useState(null);
+      useEffect(()=>{
+        const calc=()=>{
+          const d=Date.now()-start.getTime();
+          if(d<0){setE(null);return;}
+          setE({
+            days:Math.floor(d/86400000),
+            hours:Math.floor((d%86400000)/3600000),
+            minutes:Math.floor((d%3600000)/60000),
+            seconds:Math.floor((d%60000)/1000),
+          });
+        };
+        calc(); const id=setInterval(calc,1000); return ()=>clearInterval(id);
+      },[]);
+      return e;
+    }
+
+    function TimerBox({ label, value }) {
+      const [key,setKey]=useState(0);
+      const prev=useRef(value);
+      useEffect(()=>{ if(prev.current!==value){setKey(k=>k+1);prev.current=value;} },[value]);
+      return (
+        <div style={{
+          display:'flex',flexDirection:'column',alignItems:'center',flex:1,minWidth:64,
+          background:'rgba(255,255,255,.22)',backdropFilter:'blur(12px)',
+          border:'1px solid rgba(255,255,255,.45)',borderRadius:20,padding:'18px 10px',
+          boxShadow:'0 4px 20px rgba(244,114,182,.1)',
+        }}>
+          <motion.span key={key} initial={{y:-14,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:.25}}
+            style={{
+              fontFamily:'Playfair Display',fontWeight:700,
+              fontSize:'clamp(28px,6vw,50px)',
+              color:'#be185d',lineHeight:1,
+              textShadow:'0 2px 8px rgba(190,24,93,.2)',
+            }}>
+            {String(value).padStart(2,'0')}
+          </motion.span>
+          <span style={{ fontFamily:'Inter',fontSize:11,fontWeight:600,color:'#9d174d',marginTop:6,letterSpacing:1,textTransform:'uppercase',opacity:.8 }}>
+            {label}
+          </span>
+        </div>
+      );
+    }
+
+    // ─── SECTION WRAPPER ──────────────────────────────────────────────
+    function Section({ children }) {
+      return (
+        <motion.section
+          initial={{ opacity:0,y:44 }}
+          whileInView={{ opacity:1,y:0 }}
+          viewport={{ once:true,margin:'-50px' }}
+          transition={{ duration:.7,ease:'easeOut' }}
+          style={{
+            borderRadius:26,
+            background:'rgba(255,255,255,.22)',
+            backdropFilter:'blur(20px) saturate(180%)',
+            WebkitBackdropFilter:'blur(20px) saturate(180%)',
+            border:'1px solid rgba(255,255,255,.42)',
+            padding:'32px 26px',
+            boxShadow:'0 8px 40px rgba(190,24,93,.07),inset 0 1px 0 rgba(255,255,255,.55)',
+          }}
+        >
+          {children}
+        </motion.section>
+      );
+    }
+
+    function STitle({ icon, children }) {
+      return (
+        <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:22 }}>
+          {icon && <span style={{ fontSize:22 }}>{icon}</span>}
+          <h2 style={{ fontFamily:'Playfair Display',fontWeight:700,fontSize:'clamp(20px,4vw,25px)',color:'#9d174d' }}>
+            {children}
+          </h2>
+        </div>
+      );
+    }
+
+    // ─── APP ──────────────────────────────────────────────────────────
+    function App() {
+      const [unlocked,setUnlocked] = useState(false);
+      const [solved,setSolved]     = useState(false);
+      const elapsed = useTimer(START_DATE);
+
+      const reset = () => {
+        setUnlocked(false); setSolved(false);
+        window.scrollTo({ top:0, behavior:'smooth' });
+      };
+
+      return (
+        <div style={{ minHeight:'100vh',position:'relative' }}>
+
+          {/* floral bg */}
+          <AnimatePresence>
+            {unlocked && (
+              <motion.div key="bg"
+                initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:1.3 }}
+                style={{
+                  position:'fixed',inset:0,zIndex:0,
+                  backgroundImage:`url(${PUZZLE_IMAGE})`,
+                  backgroundSize:'cover',backgroundPosition:'center',
+                  backgroundAttachment:'fixed',
+                  filter:'brightness(.65) saturate(1.3)',
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* pink overlay */}
+          {unlocked && (
+            <div style={{ position:'fixed',inset:0,zIndex:1,background:'rgba(255,210,225,.18)',pointerEvents:'none' }}/>
+          )}
+
+          {/* lock */}
+          <AnimatePresence>
+            {!unlocked && <LockScreen onUnlock={()=>setUnlocked(true)}/>}
+          </AnimatePresence>
+
+          {/* main */}
+          <AnimatePresence>
+            {unlocked && (
+              <motion.div key="main"
+                initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:.9,delay:.2 }}
+                style={{
+                  position:'relative',zIndex:2,
+                  maxWidth:760,margin:'0 auto',
+                  padding:'48px 20px 100px',
+                  display:'flex',flexDirection:'column',gap:28,
+                }}
+              >
+                {/* PUZZLE */}
+                <Section>
+                  <STitle icon="🧩"> 3 savdoyi </STitle>
+                  <p style={{ fontFamily:'Inter',fontSize:14,color:'rgba(157,23,77,.85)',marginBottom:24,lineHeight:1.7 }}>
+                    Tap two tiles to swap them. The page unlocks when the picture is complete.
+                  </p>
+                  <div style={{ display:'flex',justifyContent:'center' }}>
+                    <Puzzle onSolved={()=>setSolved(true)}/>
+                  </div>
+                </Section>
+
+                {/* REVEALED */}
+                <AnimatePresence>
+                  {solved && (
+                    <motion.div key="content"
+                      initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:1.1 }}
+                      style={{ display:'flex',flexDirection:'column',gap:28 }}
+                    >
+                      {/* LOVE LETTER */}
+                      <Section>
+                        <STitle icon=":)">Sizga bir noma</STitle>
+                        <div style={{
+                          fontFamily:'Lora',lineHeight:1.9,color:'rgba(75,15,35,.9)',
+                          fontSize:'clamp(15px,3vw,17px)',
+                          background:'rgba(255,240,248,.6)',backdropFilter:'blur(8px)',
+                          borderRadius:18,padding:'28px 22px',
+                          border:'1px solid rgba(244,114,182,.22)',
+                          boxShadow:'inset 0 1px 0 rgba(255,255,255,.8)',
+                        }}>
+                          <p style={{ fontFamily:'Playfair Display',fontStyle:'italic',fontSize:20,color:'#be185d',marginBottom:18 }}>
+                            yig'loqi Farangizga,
+                          </p>
+                          <p style={{ marginBottom:14 }}>
+                            Siz bilan kursdosh bo'lganimizning bu birinchi yilida juda ko'p narsani birga boshdan kechirganimizni eslasam, ko'nglim to'ladi. Kulgimiz, darslar, arzimas muammolar ustidan janjal va urushlar bular esda qolarli bo'lgan! do'stim 
+                          </p>
+                          <p style={{ marginBottom:14 }}>
+                            Siz doim haqiqiy do'st bo'ldiz — doimo gapi to'g'ri aytadigan yig'loqi, kerak payt yonimda turadigan. Bu saytni yasadim, chunki bir xotira yasagim  keldi. buni congulations !!!                           </p>
+                          <p style={{ marginBottom:14 }}>
+                            agar zeriksayiz shu saytga kirib  hotiralarni eslashiz mumkin.
+                          </p>
+                          <p style={{ fontFamily:'Playfair Display',fontStyle:'italic',textAlign:'right',color:'#be185d',fontSize:17,marginTop:22 }}>
+                            — do'stizdan estalik saqlab qo'ying! :) 
+                          </p>
+                        </div>
+                      </Section>
+
+                      {/* PLAYLIST */}
+                      <Section>
+                        <STitle icon="🎵">albatta eshitib ko'ring </STitle>
+                        <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:14 }}>
+                          {SPOTIFY_TRACKS.map((id,i)=>(
+                            <div key={i} className="spotify-frame">
+                              <iframe
+                                style={{ borderRadius:'12px' }}
+                                src={`https://open.spotify.com/embed/track/${id}?utm_source=generator&theme=0`}
+                                width="100%" height="152" frameBorder="0"
+                                allow="autoplay;clipboard-write;encrypted-media;fullscreen;picture-in-picture"
+                                loading="lazy" title={`Track ${i+1}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ marginTop:18,padding:16,borderRadius:14,background:'rgba(255,240,248,.7)',backdropFilter:'blur(8px)',border:'1px solid rgba(244,114,182,.22)' }}>
+                          <p style={{ fontFamily:'Playfair Display',fontSize:15,color:'#9d174d',marginBottom:10,fontStyle:'italic' }}>
+                            🎧 MAXSUS (0:25-:35)
+                          </p>
+                          <audio controls src="Konsta.mp3" style={{ width:'100%',borderRadius:8,accentColor:'#f472b6' }}/>
+                        </div>
+                      </Section>
+
+                      {/* TIMER */}
+                      <Section>
+                        <STitle icon="⏳">Do'stimni tanigan kunlarim </STitle>
+                        {elapsed ? (
+                          <>
+                            <div style={{ display:'flex',gap:10,flexWrap:'wrap',justifyContent:'center',marginBottom:18 }}>
+                              <TimerBox label="Kun"     value={elapsed.days}/>
+                              <TimerBox label="Soat"    value={elapsed.hours}/>
+                              <TimerBox label="Daqiqa"  value={elapsed.minutes}/>
+                              <TimerBox label="Soniya"  value={elapsed.seconds}/>
+                            </div>
+                            <motion.p initial={{opacity:0}} animate={{opacity:1}} transition={{delay:.5}}
+                              style={{ fontFamily:'Lora',fontStyle:'italic',textAlign:'center',color:'rgba(157,23,77,.85)',fontSize:'clamp(14px,3vw,16px)',lineHeight:1.7 }}>
+                              Bu vaqtlar juda qadrli !
+                            </motion.p>
+                          </>
+                        ) : (
+                          <p style={{ textAlign:'center',color:'#be185d',fontFamily:'Lora',fontStyle:'italic' }}>Taymerni hisoblash...</p>
+                        )}
+                      </Section>
+
+                      {/* BACK */}
+                      <div style={{ display:'flex',justifyContent:'center',paddingTop:8 }}>
+                        <motion.button
+                          whileHover={{ scale:1.05,x:-4 }} whileTap={{ scale:.93 }}
+                          onClick={reset}
+                          style={{
+                            display:'flex',alignItems:'center',gap:8,
+                            background:'rgba(255,255,255,.25)',backdropFilter:'blur(12px)',
+                            border:'1.5px solid rgba(244,114,182,.5)',borderRadius:50,
+                            padding:'12px 30px',color:'#9d174d',
+                            fontFamily:'Inter',fontSize:15,fontWeight:500,cursor:'pointer',
+                            boxShadow:'0 4px 18px rgba(244,114,182,.15)',
+                            transition:'background .2s',
+                          }}
+                          onMouseEnter={e=>e.currentTarget.style.background='rgba(252,231,243,.7)'}
+                          onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.25)'}
+                        >
+                          ← Orqaga
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
